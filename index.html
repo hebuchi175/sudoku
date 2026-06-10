@@ -47,25 +47,20 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
 .msg.win{color:#34c759;font-weight:600}
 .msg.err{color:#ff3b30}
 
-/* オーバーレイ共通 */
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center}
 .overlay.show{display:flex}
 .modal{background:#fff;border-radius:16px;padding:24px 20px;max-width:320px;width:90%;text-align:center;display:flex;flex-direction:column;gap:16px}
 .modal h2{font-size:20px;font-weight:600;color:#1d1d1f}
 .modal p{font-size:14px;color:#6e6e73;line-height:1.6}
-
-/* 広告エリア */
 .ad-box{background:#f2f2f7;border:1.5px dashed #c7c7cc;border-radius:10px;padding:16px;text-align:center;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .ad-box .ad-label{font-size:11px;color:#aeaeb2;letter-spacing:0.5px}
 .ad-box .ad-dummy{font-size:13px;color:#8e8e93}
-
-/* カウントダウン */
 .countdown{font-size:28px;font-weight:700;color:#007aff}
-
 .modal-btn{padding:12px 0;border-radius:12px;border:none;font-size:16px;font-weight:600;cursor:pointer;width:100%}
 .modal-btn.primary{background:#007aff;color:#fff}
 .modal-btn.secondary{background:#f2f2f7;color:#1d1d1f}
 .modal-btn:active{opacity:0.8}
+.modal-btn:disabled{opacity:0.4;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -91,7 +86,44 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
   <div class="msg" id="msg"></div>
 </div>
 
-<!-- クリア時広告モーダル -->
+<!-- ① 3回ミス直後の広告（自動で選択画面へ移行） -->
+<div class="overlay" id="missAd1Overlay">
+  <div class="modal">
+    <h2>😓 3回ミス！</h2>
+    <div class="ad-box">
+      <div class="ad-label">ADVERTISEMENT</div>
+      <div class="ad-dummy">【ここに広告が表示されます】</div>
+      <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
+    </div>
+    <div class="countdown" id="missAd1Countdown"></div>
+  </div>
+</div>
+
+<!-- ② 選択画面 -->
+<div class="overlay" id="missChoiceOverlay">
+  <div class="modal">
+    <h2>続けますか？</h2>
+    <p>続ける場合はもう一度広告をご覧ください。</p>
+    <button class="modal-btn primary" onclick="showContinueAd()">続ける</button>
+    <button class="modal-btn secondary" onclick="giveUp()">諦めて新しいゲーム</button>
+  </div>
+</div>
+
+<!-- ③ 続ける選択後の広告（終了後ゲーム再開） -->
+<div class="overlay" id="continueAdOverlay">
+  <div class="modal">
+    <h2>まもなく再開します</h2>
+    <div class="ad-box">
+      <div class="ad-label">ADVERTISEMENT</div>
+      <div class="ad-dummy">【ここに広告が表示されます】</div>
+      <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
+    </div>
+    <div class="countdown" id="continueAdCountdown"></div>
+    <button class="modal-btn primary" id="continueBtn" onclick="continueGame()" disabled>ゲームを再開する</button>
+  </div>
+</div>
+
+<!-- ④ クリア時広告 -->
 <div class="overlay" id="winOverlay">
   <div class="modal">
     <h2>🎉 クリア！</h2>
@@ -101,43 +133,34 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
       <div class="ad-dummy">【ここに広告が表示されます】</div>
       <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
     </div>
-    <div class="countdown" id="winCountdown">5</div>
+    <div class="countdown" id="winCountdown"></div>
     <button class="modal-btn primary" id="winCloseBtn" onclick="closeWinOverlay()" disabled>次のゲームへ</button>
   </div>
 </div>
 
-<!-- 3回ミス時広告＋選択モーダル -->
-<div class="overlay" id="missOverlay">
-  <div class="modal">
-    <h2>😓 3回ミス！</h2>
-    <p>ゲームを続けますか？<br>続ける場合は広告をご覧ください。</p>
-    <div class="ad-box">
-      <div class="ad-label">ADVERTISEMENT</div>
-      <div class="ad-dummy">【ここに広告が表示されます】</div>
-      <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
-    </div>
-    <div class="countdown" id="missCountdown">5</div>
-    <button class="modal-btn primary" id="continueBtn" onclick="continueGame()" disabled>続ける（広告を見ました）</button>
-    <button class="modal-btn secondary" onclick="giveUp()">諦めて新しいゲーム</button>
-  </div>
-</div>
 
-<!-- 諦め後広告モーダル -->
-<div class="overlay" id="giveUpOverlay">
-  <div class="modal">
-    <h2>またチャレンジしよう！</h2>
-    <div class="ad-box">
-      <div class="ad-label">ADVERTISEMENT</div>
-      <div class="ad-dummy">【ここに広告が表示されます】</div>
-    </div>
-    <div class="countdown" id="giveUpCountdown">5</div>
-    <button class="modal-btn primary" id="giveUpCloseBtn" onclick="closeGiveUpOverlay()" disabled>新しいゲームへ</button>
-  </div>
-</div>
 
 <script>
 const DIFFS=[35,45,55];
 let diff=0,board=[],solution=[],given=[],memo=[],selected=null,memoMode=false,hints=3,timer=0,timerInterval=null,won=false,missCount=0;
+
+function randSec(){return Math.floor(Math.random()*11)+5}
+
+function startCountdown(elId, btnId, onDone){
+  let left=randSec();
+  const el=document.getElementById(elId);
+  el.textContent=left;
+  if(btnId)document.getElementById(btnId).disabled=true;
+  const t=setInterval(()=>{
+    left--;
+    el.textContent=left>0?left:'';
+    if(left<=0){
+      clearInterval(t);
+      if(btnId)document.getElementById(btnId).disabled=false;
+      if(onDone)onDone();
+    }
+  },1000);
+}
 
 function idx(r,c){return r*9+c}
 function possible(b,r,c,n){
@@ -235,7 +258,9 @@ function inputNum(n){
       document.getElementById('missCount').textContent='ミス: '+missCount+'/3';
       if(missCount>=3){
         clearInterval(timerInterval);
-        setTimeout(()=>showMissOverlay(),400);
+        setTimeout(()=>showMissAd1(),400);
+        renderBoard();
+        return;
       }
     }
     if(n)memo[selected].clear();
@@ -270,37 +295,23 @@ function checkWin(){
   }
 }
 
-/* カウントダウン共通 */
-function startCountdown(elId, btnId, sec){
-  let left=sec;
-  document.getElementById(elId).textContent=left;
-  document.getElementById(btnId).disabled=true;
-  const t=setInterval(()=>{
-    left--;
-    document.getElementById(elId).textContent=left;
-    if(left<=0){clearInterval(t);document.getElementById(elId).textContent='';document.getElementById(btnId).disabled=false;}
-  },1000);
+/* 3回ミス → 広告① → 選択画面 */
+function showMissAd1(){
+  document.getElementById('missAd1Overlay').classList.add('show');
+  startCountdown('missAd1Countdown', null, ()=>{
+    document.getElementById('missAd1Overlay').classList.remove('show');
+    document.getElementById('missChoiceOverlay').classList.add('show');
+  });
 }
 
-/* クリアモーダル */
-function showWinOverlay(){
-  let m=String(Math.floor(timer/60)).padStart(2,'0'),s=String(timer%60).padStart(2,'0');
-  document.getElementById('winTime').textContent='クリアタイム: '+m+':'+s;
-  document.getElementById('winOverlay').classList.add('show');
-  startCountdown('winCountdown','winCloseBtn',5);
-}
-function closeWinOverlay(){
-  document.getElementById('winOverlay').classList.remove('show');
-  newGame();
-}
-
-/* 3回ミスモーダル */
-function showMissOverlay(){
-  document.getElementById('missOverlay').classList.add('show');
-  startCountdown('missCountdown','continueBtn',5);
+/* 続ける → 広告② → ゲーム再開 */
+function showContinueAd(){
+  document.getElementById('missChoiceOverlay').classList.remove('show');
+  document.getElementById('continueAdOverlay').classList.add('show');
+  startCountdown('continueAdCountdown','continueBtn', null);
 }
 function continueGame(){
-  document.getElementById('missOverlay').classList.remove('show');
+  document.getElementById('continueAdOverlay').classList.remove('show');
   missCount=0;
   document.getElementById('missCount').textContent='ミス: 0/3';
   timerInterval=setInterval(()=>{
@@ -309,13 +320,22 @@ function continueGame(){
     document.getElementById('timer').textContent=m+':'+s;
   },1000);
 }
+
+/* 諦める → 即新ゲーム */
 function giveUp(){
-  document.getElementById('missOverlay').classList.remove('show');
-  document.getElementById('giveUpOverlay').classList.add('show');
-  startCountdown('giveUpCountdown','giveUpCloseBtn',5);
+  document.getElementById('missChoiceOverlay').classList.remove('show');
+  newGame();
 }
-function closeGiveUpOverlay(){
-  document.getElementById('giveUpOverlay').classList.remove('show');
+
+/* クリア → 広告 → 新ゲーム */
+function showWinOverlay(){
+  let m=String(Math.floor(timer/60)).padStart(2,'0'),s=String(timer%60).padStart(2,'0');
+  document.getElementById('winTime').textContent='クリアタイム: '+m+':'+s;
+  document.getElementById('winOverlay').classList.add('show');
+  startCountdown('winCountdown','winCloseBtn', null);
+}
+function closeWinOverlay(){
+  document.getElementById('winOverlay').classList.remove('show');
   newGame();
 }
 
