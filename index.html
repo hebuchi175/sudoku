@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>数独</title>
+<meta name="description" content="数独パズルアプリ">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="数独">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f5f7;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px 0 32px}
+h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
+.controls{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+.diff-btn{font-size:13px;padding:6px 14px;border-radius:20px;border:1px solid #d1d1d6;background:#fff;color:#6e6e73;cursor:pointer;transition:all .15s}
+.diff-btn.active{background:#007aff;color:#fff;border-color:#007aff}
+.icon-btn{font-size:13px;padding:6px 12px;border-radius:20px;border:1px solid #d1d1d6;background:#fff;color:#6e6e73;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
+.icon-btn.active{background:#ff9500;color:#fff;border-color:#ff9500}
+.board-area{display:flex;flex-direction:column;align-items:center;gap:12px}
+.board{display:grid;grid-template-columns:repeat(9,1fr);background:#8e8e93;border:2px solid #3a3a3c;border-radius:8px;overflow:hidden;gap:1px;touch-action:none}
+.cell{width:min(calc((100vw - 40px)/9), 48px);height:min(calc((100vw - 40px)/9), 48px);display:flex;align-items:center;justify-content:center;background:#fff;position:relative;cursor:pointer;font-size:clamp(14px,4vw,20px);font-weight:500;color:#1d1d1f;transition:background .1s;user-select:none}
+.cell:nth-child(3n):not(:nth-child(9n)){border-right:2px solid #3a3a3c}
+.cell:nth-child(n+19):nth-child(-n+27),.cell:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid #3a3a3c}
+.cell.given{color:#1d1d1f}
+.cell.user-input{color:#007aff}
+.cell.selected{background:#cce5ff}
+.cell.related{background:#f2f2f7}
+.cell.same-num{background:#b3d7ff}
+.cell.error{color:#ff3b30 !important}
+.cell.hint-cell{background:#d4edda !important}
+.memo-grid{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;padding:1px}
+.memo-num{font-size:clamp(8px,2.5vw,10px);display:flex;align-items:center;justify-content:center;color:#8e8e93}
+.info-row{display:flex;gap:16px;align-items:center;justify-content:center}
+.timer{font-size:20px;font-weight:500;color:#1d1d1f;letter-spacing:1px}
+.hints-left{font-size:13px;color:#6e6e73}
+.numpad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.num-btn{width:min(calc((100vw - 60px)/5), 54px);height:min(calc((100vw - 60px)/5), 54px);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,5vw,22px);font-weight:500;border-radius:10px;border:1px solid #d1d1d6;background:#fff;cursor:pointer;color:#1d1d1f;transition:all .1s;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.num-btn:active{transform:scale(0.93);background:#f2f2f7}
+.num-btn.erase{font-size:18px;color:#6e6e73}
+.action-row{display:flex;gap:8px;justify-content:center}
+.msg{font-size:14px;min-height:20px;text-align:center;color:#6e6e73}
+.msg.win{color:#34c759;font-weight:600}
+.msg.err{color:#ff3b30}
+</style>
+</head>
+<body>
+<h1>数独</h1>
+<div class="controls">
+  <button class="diff-btn active" onclick="setDiff(0,this)">簡単</button>
+  <button class="diff-btn" onclick="setDiff(1,this)">普通</button>
+  <button class="diff-btn" onclick="setDiff(2,this)">難しい</button>
+  <button class="icon-btn" onclick="newGame()">↺ 新しいゲーム</button>
+</div>
+<div class="board-area">
+  <div id="board" class="board"></div>
+  <div class="info-row">
+    <div class="timer" id="timer">00:00</div>
+    <div class="hints-left" id="hintsLeft">ヒント残り: 3</div>
+  </div>
+  <div class="numpad" id="numpad"></div>
+  <div class="action-row">
+    <button class="icon-btn" id="memoBtn" onclick="toggleMemo()">✏️ メモ</button>
+    <button class="icon-btn" onclick="useHint()">💡 ヒント</button>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+const DIFFS=[35,45,55];
+let diff=0,board=[],solution=[],given=[],memo=[],selected=null,memoMode=false,hints=3,timer=0,timerInterval=null,won=false;
+
+function idx(r,c){return r*9+c}
+function possible(b,r,c,n){
+  for(let i=0;i<9;i++){if(b[idx(r,i)]===n||b[idx(i,c)]===n)return false}
+  let br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)if(b[idx(br+i,bc+j)]===n)return false;
+  return true;
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function solve(b){
+  let empty=-1;
+  for(let i=0;i<81;i++)if(!b[i]){empty=i;break}
+  if(empty===-1)return true;
+  let r=Math.floor(empty/9),c=empty%9;
+  let nums=shuffle([1,2,3,4,5,6,7,8,9]);
+  for(let n of nums){if(possible(b,r,c,n)){b[empty]=n;if(solve(b))return true;b[empty]=0}}
+  return false;
+}
+function generate(){
+  let b=new Array(81).fill(0);
+  solve(b);
+  solution=[...b];
+  let remove=DIFFS[diff];
+  let cells=shuffle([...Array(81).keys()]);
+  for(let i=0;i<remove;i++)b[cells[i]]=0;
+  board=[...b];
+  given=b.map(v=>v!==0);
+  memo=Array(81).fill(null).map(()=>new Set());
+}
+function setDiff(d,el){
+  diff=d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  newGame();
+}
+function newGame(){
+  won=false;hints=3;selected=null;memoMode=false;
+  clearInterval(timerInterval);timer=0;
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('hintsLeft').textContent='ヒント残り: 3';
+  document.getElementById('msg').textContent='';
+  document.getElementById('msg').className='msg';
+  document.getElementById('memoBtn').classList.remove('active');
+  generate();renderBoard();
+  timerInterval=setInterval(()=>{
+    if(won)return;timer++;
+    let m=String(Math.floor(timer/60)).padStart(2,'0'),s=String(timer%60).padStart(2,'0');
+    document.getElementById('timer').textContent=m+':'+s;
+  },1000);
+}
+function renderBoard(){
+  const bd=document.getElementById('board');
+  bd.innerHTML='';
+  for(let i=0;i<81;i++){
+    const cell=document.createElement('div');
+    cell.className='cell'+(given[i]?' given':'');
+    cell.dataset.i=i;
+    cell.onclick=()=>selectCell(i);
+    if(board[i]){
+      if(!given[i])cell.classList.add('user-input');
+      cell.textContent=board[i];
+    } else if(memo[i].size){
+      const mg=document.createElement('div');mg.className='memo-grid';
+      for(let n=1;n<=9;n++){const mn=document.createElement('div');mn.className='memo-num';mn.textContent=memo[i].has(n)?n:'';mg.appendChild(mn)}
+      cell.appendChild(mg);
+    }
+    bd.appendChild(cell);
+  }
+  highlightCells();
+}
+function highlightCells(){
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected','related','same-num','error','hint-cell'));
+  if(selected===null)return;
+  const r=Math.floor(selected/9),co=selected%9,br=Math.floor(r/3)*3,bc=Math.floor(co/3)*3;
+  const selVal=board[selected];
+  document.querySelectorAll('.cell').forEach(c=>{
+    const i=+c.dataset.i,cr=Math.floor(i/9),cc=i%9;
+    if(i===selected){c.classList.add('selected');return}
+    if(cr===r||cc===co||(Math.floor(cr/3)*3===br&&Math.floor(cc/3)*3===bc))c.classList.add('related');
+    if(selVal&&board[i]===selVal)c.classList.add('same-num');
+    if(board[i]&&!given[i]&&board[i]!==solution[i])c.classList.add('error');
+  });
+}
+function selectCell(i){selected=i;highlightCells()}
+function inputNum(n){
+  if(selected===null||given[selected]||won)return;
+  if(memoMode){
+    if(!board[selected]){memo[selected].has(n)?memo[selected].delete(n):memo[selected].add(n)}
+  } else {
+    board[selected]=board[selected]===n?0:n;
+    if(n)memo[selected].clear();
+    checkWin();
+  }
+  renderBoard();
+}
+function eraseCell(){
+  if(selected===null||given[selected]||won)return;
+  board[selected]=0;memo[selected].clear();renderBoard();
+}
+function toggleMemo(){
+  memoMode=!memoMode;
+  document.getElementById('memoBtn').classList.toggle('active',memoMode);
+}
+function useHint(){
+  if(hints<=0||won){document.getElementById('msg').textContent='ヒントが残っていません';document.getElementById('msg').className='msg err';return}
+  let candidates=[];
+  for(let i=0;i<81;i++)if(!given[i]&&board[i]!==solution[i])candidates.push(i);
+  if(!candidates.length)return;
+  let target=candidates[Math.floor(Math.random()*candidates.length)];
+  board[target]=solution[target];memo[target].clear();given[target]=true;
+  hints--;selected=target;
+  document.getElementById('hintsLeft').textContent='ヒント残り: '+hints;
+  checkWin();renderBoard();
+  document.querySelectorAll('.cell')[target].classList.add('hint-cell');
+}
+function checkWin(){
+  if(board.every((v,i)=>v===solution[i])){
+    won=true;clearInterval(timerInterval);
+    document.getElementById('msg').textContent='🎉 クリア！おめでとうございます！';
+    document.getElementById('msg').className='msg win';
+  }
+}
+const numpad=document.getElementById('numpad');
+for(let n=1;n<=9;n++){const b=document.createElement('button');b.className='num-btn';b.textContent=n;b.onclick=()=>inputNum(n);numpad.appendChild(b)}
+const er=document.createElement('button');er.className='num-btn erase';er.textContent='⌫';er.onclick=eraseCell;numpad.appendChild(er);
+
+document.addEventListener('keydown',e=>{
+  if(e.key>='1'&&e.key<='9')inputNum(+e.key);
+  if(e.key==='Backspace'||e.key==='Delete')eraseCell();
+  if(e.key==='ArrowRight'&&selected!==null&&selected%9<8)selectCell(selected+1);
+  if(e.key==='ArrowLeft'&&selected!==null&&selected%9>0)selectCell(selected-1);
+  if(e.key==='ArrowDown'&&selected!==null&&selected<72)selectCell(selected+9);
+  if(e.key==='ArrowUp'&&selected!==null&&selected>8)selectCell(selected-9);
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
+}
+newGame();
+</script>
+</body>
+</html>
