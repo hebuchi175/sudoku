@@ -47,8 +47,8 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
 .msg.win{color:#34c759;font-weight:600}
 .msg.err{color:#ff3b30}
 
-.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center}
-.overlay.show{display:flex}
+.overlay{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center}
+.overlay.show{display:flex !important}
 .modal{background:#fff;border-radius:16px;padding:24px 20px;max-width:320px;width:90%;text-align:center;display:flex;flex-direction:column;gap:16px}
 .modal h2{font-size:20px;font-weight:600;color:#1d1d1f}
 .modal p{font-size:14px;color:#6e6e73;line-height:1.6}
@@ -104,7 +104,7 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
   <div class="modal">
     <h2>続けますか？</h2>
     <p>続ける場合はもう一度広告をご覧ください。</p>
-    <button class="modal-btn primary" onclick="showContinueAd()">続ける</button>
+    <button class="modal-btn primary" onclick="showContinueAd()">続ける（広告を見る）</button>
     <button class="modal-btn secondary" onclick="giveUp()">諦めて新しいゲーム</button>
   </div>
 </div>
@@ -307,8 +307,10 @@ function showMissAd1(){
 /* 続ける → 広告② → ゲーム再開 */
 function showContinueAd(){
   document.getElementById('missChoiceOverlay').classList.remove('show');
-  document.getElementById('continueAdOverlay').classList.add('show');
-  startCountdown('continueAdCountdown','continueBtn', null);
+  const overlay=document.getElementById('continueAdOverlay');
+  overlay.classList.add('show');
+  document.getElementById('continueBtn').disabled=true;
+  setTimeout(()=>startCountdown('continueAdCountdown','continueBtn',null),50);
 }
 function continueGame(){
   document.getElementById('continueAdOverlay').classList.remove('show');
