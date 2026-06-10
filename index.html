@@ -13,13 +13,38 @@
 <meta name="apple-mobile-web-app-title" content="数独">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f5f7;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px 0 32px}
-h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
-.controls{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
-.diff-btn{font-size:13px;padding:6px 14px;border-radius:20px;border:1px solid #d1d1d6;background:#fff;color:#6e6e73;cursor:pointer;transition:all .15s}
-.diff-btn.active{background:#007aff;color:#fff;border-color:#007aff}
-.icon-btn{font-size:13px;padding:6px 12px;border-radius:20px;border:1px solid #d1d1d6;background:#fff;color:#6e6e73;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
-.icon-btn.active{background:#ff9500;color:#fff;border-color:#ff9500}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f5f7;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+
+/* ========== ホーム画面 ========== */
+#homeScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;width:100%;padding:32px 24px;gap:0}
+.home-title{font-size:48px;margin-bottom:8px}
+.home-subtitle{font-size:28px;font-weight:700;color:#1d1d1f;margin-bottom:48px}
+.home-section-label{font-size:13px;color:#8e8e93;font-weight:500;letter-spacing:0.5px;align-self:flex-start;margin-bottom:8px;width:100%;max-width:320px}
+.home-card{background:#fff;border-radius:16px;width:100%;max-width:320px;overflow:hidden;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.home-card-btn{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border:none;background:transparent;cursor:pointer;width:100%;font-size:17px;font-weight:500;color:#1d1d1f;border-bottom:0.5px solid #f2f2f7;transition:background .1s}
+.home-card-btn:last-child{border-bottom:none}
+.home-card-btn:active{background:#f2f2f7}
+.home-card-btn .diff-badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+.badge-easy{background:#d4edda;color:#1a7a3a}
+.badge-normal{background:#fff3cd;color:#856404}
+.badge-hard{background:#fde8e8;color:#9b1c1c}
+.home-card-btn .arrow{color:#c7c7cc;font-size:18px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:0.5px solid #f2f2f7}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:16px;color:#1d1d1f}
+.toggle{position:relative;width:50px;height:30px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#d1d1d6;border-radius:30px;transition:.3s;cursor:pointer}
+.toggle-slider:before{content:'';position:absolute;width:26px;height:26px;left:2px;top:2px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:#34c759}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px)}
+
+/* ========== ゲーム画面 ========== */
+#gameScreen{display:none;flex-direction:column;align-items:center;padding:16px 0 32px;width:100%}
+.game-header{display:flex;align-items:center;width:100%;max-width:460px;padding:0 16px;margin-bottom:12px;gap:8px}
+.back-btn{font-size:15px;padding:6px 12px;border-radius:20px;border:1px solid #d1d1d6;background:#fff;color:#007aff;cursor:pointer;white-space:nowrap}
+.game-title{font-size:18px;font-weight:600;color:#1d1d1f;flex:1;text-align:center}
+.diff-label{font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px}
 .board-area{display:flex;flex-direction:column;align-items:center;gap:12px}
 .board{display:grid;grid-template-columns:repeat(9,1fr);background:#8e8e93;border:2px solid #3a3a3c;border-radius:8px;overflow:hidden;gap:1px;touch-action:none}
 .cell{width:min(calc((100vw - 40px)/9), 48px);height:min(calc((100vw - 40px)/9), 48px);display:flex;align-items:center;justify-content:center;background:#fff;position:relative;cursor:pointer;font-size:clamp(14px,4vw,20px);font-weight:500;color:#1d1d1f;transition:background .1s;user-select:none}
@@ -31,22 +56,22 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
 .cell.related{background:#f2f2f7}
 .cell.same-num{background:#b3d7ff}
 .cell.error{color:#ff3b30 !important}
-.cell.hint-cell{background:#d4edda !important}
 .memo-grid{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;padding:1px}
 .memo-num{font-size:clamp(8px,2.5vw,10px);display:flex;align-items:center;justify-content:center;color:#8e8e93}
 .info-row{display:flex;gap:16px;align-items:center;justify-content:center}
 .timer{font-size:20px;font-weight:500;color:#1d1d1f;letter-spacing:1px}
-.hints-left{font-size:13px;color:#6e6e73}
 .miss-count{font-size:13px;color:#ff3b30;font-weight:500}
 .numpad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .num-btn{width:min(calc((100vw - 60px)/5), 54px);height:min(calc((100vw - 60px)/5), 54px);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,5vw,22px);font-weight:500;border-radius:10px;border:1px solid #d1d1d6;background:#fff;cursor:pointer;color:#1d1d1f;transition:all .1s;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .num-btn:active{transform:scale(0.93);background:#f2f2f7}
 .num-btn.erase{font-size:18px;color:#6e6e73}
 .action-row{display:flex;gap:8px;justify-content:center}
+.icon-btn{font-size:13px;padding:6px 12px;border-radius:20px;border:1px solid #d1d1d6;background:#fff;color:#6e6e73;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s}
+.icon-btn.active{background:#ff9500;color:#fff;border-color:#ff9500}
 .msg{font-size:14px;min-height:20px;text-align:center;color:#6e6e73}
-.msg.win{color:#34c759;font-weight:600}
 .msg.err{color:#ff3b30}
 
+/* ========== モーダル ========== */
 .overlay{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center}
 .overlay.show{display:flex !important}
 .modal{background:#fff;border-radius:16px;padding:24px 20px;max-width:320px;width:90%;text-align:center;display:flex;flex-direction:column;gap:16px}
@@ -64,36 +89,84 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
 </style>
 </head>
 <body>
-<h1>数独</h1>
-<div class="controls">
-  <button class="diff-btn active" onclick="setDiff(0,this)">簡単</button>
-  <button class="diff-btn" onclick="setDiff(1,this)">普通</button>
-  <button class="diff-btn" onclick="setDiff(2,this)">難しい</button>
-  <button class="icon-btn" onclick="newGame()">↺ 新しいゲーム</button>
-</div>
-<div class="board-area">
-  <div id="board" class="board"></div>
-  <div class="info-row">
-    <div class="timer" id="timer">00:00</div>
-    <div class="hints-left" id="hintsLeft">ヒント残り: 3</div>
-    <div class="miss-count" id="missCount">ミス: 0/3</div>
+
+<!-- ========== ホーム画面 ========== -->
+<div id="homeScreen">
+  <div style="font-size:56px;margin-bottom:4px">🔢</div>
+  <div class="home-subtitle">数独</div>
+
+  <div class="home-section-label">難易度を選んでスタート</div>
+  <div class="home-card">
+    <button class="home-card-btn" onclick="startGame(0)">
+      <span>簡単</span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="diff-badge badge-easy">EASY</span>
+        <span class="arrow">›</span>
+      </span>
+    </button>
+    <button class="home-card-btn" onclick="startGame(1)">
+      <span>普通</span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="diff-badge badge-normal">NORMAL</span>
+        <span class="arrow">›</span>
+      </span>
+    </button>
+    <button class="home-card-btn" onclick="startGame(2)">
+      <span>難しい</span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="diff-badge badge-hard">HARD</span>
+        <span class="arrow">›</span>
+      </span>
+    </button>
   </div>
-  <div class="numpad" id="numpad"></div>
-  <div class="action-row">
-    <button class="icon-btn" id="memoBtn" onclick="toggleMemo()">✏️ メモ</button>
-    <button class="icon-btn" onclick="useHint()">💡 ヒント</button>
+
+  <div class="home-section-label">設定</div>
+  <div class="home-card">
+    <div class="setting-row">
+      <span class="setting-label">🎵 BGM</span>
+      <label class="toggle">
+        <input type="checkbox" id="bgmToggle" checked onchange="onBgmToggle()">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <span class="setting-label">🔊 効果音</span>
+      <label class="toggle">
+        <input type="checkbox" id="sfxToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
   </div>
-  <div class="msg" id="msg"></div>
 </div>
 
-<!-- ① 3回ミス直後の広告（自動で選択画面へ移行） -->
+<!-- ========== ゲーム画面 ========== -->
+<div id="gameScreen">
+  <div class="game-header">
+    <button class="back-btn" onclick="goHome()">‹ ホーム</button>
+    <div class="game-title">数独</div>
+    <div class="diff-label" id="diffLabel"></div>
+  </div>
+  <div class="board-area">
+    <div id="board" class="board"></div>
+    <div class="info-row">
+      <div class="timer" id="timer">00:00</div>
+      <div class="miss-count" id="missCount">ミス: 0/3</div>
+    </div>
+    <div class="numpad" id="numpad"></div>
+    <div class="action-row">
+      <button class="icon-btn" id="memoBtn" onclick="toggleMemo()">✏️ メモ</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<!-- ① 3回ミス直後の広告 -->
 <div class="overlay" id="missAd1Overlay">
   <div class="modal">
     <h2>😓 3回ミス！</h2>
     <div class="ad-box">
       <div class="ad-label">ADVERTISEMENT</div>
       <div class="ad-dummy">【ここに広告が表示されます】</div>
-      <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
     </div>
     <div class="countdown" id="missAd1Countdown"></div>
   </div>
@@ -109,14 +182,13 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
   </div>
 </div>
 
-<!-- ③ 続ける選択後の広告（終了後ゲーム再開） -->
+<!-- ③ 続ける選択後の広告 -->
 <div class="overlay" id="continueAdOverlay">
   <div class="modal">
     <h2>まもなく再開します</h2>
     <div class="ad-box">
       <div class="ad-label">ADVERTISEMENT</div>
       <div class="ad-dummy">【ここに広告が表示されます】</div>
-      <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
     </div>
     <div class="countdown" id="continueAdCountdown"></div>
     <button class="modal-btn primary" id="continueBtn" onclick="continueGame()" disabled>ゲームを再開する</button>
@@ -131,22 +203,110 @@ h1{font-size:22px;font-weight:600;color:#1d1d1f;margin-bottom:12px}
     <div class="ad-box">
       <div class="ad-label">ADVERTISEMENT</div>
       <div class="ad-dummy">【ここに広告が表示されます】</div>
-      <!-- AdSense審査通過後にこのコメントを広告コードに差し替えてください -->
     </div>
     <div class="countdown" id="winCountdown"></div>
     <button class="modal-btn primary" id="winCloseBtn" onclick="closeWinOverlay()" disabled>次のゲームへ</button>
   </div>
 </div>
 
-
-
 <script>
+/* ========== 音声 ========== */
+let audioCtx=null;
+let bgmNodes=null;
+let bgmPlaying=false;
+
+function getAudioCtx(){
+  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+/* BGM: シンプルなループメロディ */
+const BGM_NOTES=[261.6,293.7,329.6,349.2,392.0,349.2,329.6,293.7];
+const BGM_DUR=0.4;
+let bgmTimeout=null;
+let bgmStep=0;
+
+function playBgmStep(){
+  if(!document.getElementById('bgmToggle').checked)return;
+  const ctx=getAudioCtx();
+  const freq=BGM_NOTES[bgmStep%BGM_NOTES.length];
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.type='sine';
+  osc.frequency.setValueAtTime(freq,ctx.currentTime);
+  gain.gain.setValueAtTime(0.08,ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+BGM_DUR*0.9);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime+BGM_DUR);
+  bgmStep++;
+  bgmTimeout=setTimeout(playBgmStep,BGM_DUR*1000);
+}
+
+function startBgm(){
+  if(bgmPlaying)return;
+  bgmPlaying=true;
+  bgmStep=0;
+  playBgmStep();
+}
+
+function stopBgm(){
+  bgmPlaying=false;
+  if(bgmTimeout)clearTimeout(bgmTimeout);
+}
+
+function onBgmToggle(){
+  if(document.getElementById('bgmToggle').checked){
+    startBgm();
+  } else {
+    stopBgm();
+  }
+}
+
+/* 効果音 */
+function playSfx(type){
+  if(!document.getElementById('sfxToggle').checked)return;
+  const ctx=getAudioCtx();
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);
+  if(type==='input'){
+    osc.type='sine';osc.frequency.setValueAtTime(880,ctx.currentTime);
+    gain.gain.setValueAtTime(0.15,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.12);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.12);
+  } else if(type==='miss'){
+    osc.type='sawtooth';osc.frequency.setValueAtTime(200,ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80,ctx.currentTime+0.25);
+    gain.gain.setValueAtTime(0.2,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.25);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.25);
+  } else if(type==='erase'){
+    osc.type='sine';osc.frequency.setValueAtTime(440,ctx.currentTime);
+    gain.gain.setValueAtTime(0.1,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.08);
+    osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.08);
+  } else if(type==='win'){
+    const notes=[523.3,659.3,783.9,1046.5];
+    notes.forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.setValueAtTime(f,ctx.currentTime+i*0.12);
+      g.gain.setValueAtTime(0.18,ctx.currentTime+i*0.12);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.12+0.25);
+      o.start(ctx.currentTime+i*0.12);o.stop(ctx.currentTime+i*0.12+0.25);
+    });
+  }
+}
+
+/* ========== ゲームロジック ========== */
 const DIFFS=[35,45,55];
-let diff=0,board=[],solution=[],given=[],memo=[],selected=null,memoMode=false,hints=3,timer=0,timerInterval=null,won=false,missCount=0;
+const DIFF_LABELS=[{text:'簡単',cls:'badge-easy'},{text:'普通',cls:'badge-normal'},{text:'難しい',cls:'badge-hard'}];
+let diff=0,board=[],solution=[],given=[],memo=[],selected=null,memoMode=false,timer=0,timerInterval=null,won=false,missCount=0;
 
 function randSec(){return Math.floor(Math.random()*11)+5}
 
-function startCountdown(elId, btnId, onDone){
+function startCountdown(elId,btnId,onDone){
   let left=randSec();
   const el=document.getElementById(elId);
   el.textContent=left;
@@ -180,27 +340,39 @@ function solve(b){
   return false;
 }
 function generate(){
-  let b=new Array(81).fill(0);
-  solve(b);
+  let b=new Array(81).fill(0);solve(b);
   solution=[...b];
-  let remove=DIFFS[diff];
   let cells=shuffle([...Array(81).keys()]);
-  for(let i=0;i<remove;i++)b[cells[i]]=0;
+  for(let i=0;i<DIFFS[diff];i++)b[cells[i]]=0;
   board=[...b];
   given=b.map(v=>v!==0);
   memo=Array(81).fill(null).map(()=>new Set());
 }
-function setDiff(d,el){
+
+function startGame(d){
   diff=d;
-  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
+  getAudioCtx();
+  document.getElementById('homeScreen').style.display='none';
+  const gs=document.getElementById('gameScreen');
+  gs.style.display='flex';
+  const dl=document.getElementById('diffLabel');
+  dl.textContent=DIFF_LABELS[d].text;
+  dl.className='diff-label '+DIFF_LABELS[d].cls;
   newGame();
+  if(document.getElementById('bgmToggle').checked)startBgm();
 }
+
+function goHome(){
+  stopBgm();bgmPlaying=false;
+  clearInterval(timerInterval);
+  document.getElementById('gameScreen').style.display='none';
+  document.getElementById('homeScreen').style.display='flex';
+}
+
 function newGame(){
-  won=false;hints=3;selected=null;memoMode=false;missCount=0;
+  won=false;selected=null;memoMode=false;missCount=0;
   clearInterval(timerInterval);timer=0;
   document.getElementById('timer').textContent='00:00';
-  document.getElementById('hintsLeft').textContent='ヒント残り: 3';
   document.getElementById('missCount').textContent='ミス: 0/3';
   document.getElementById('msg').textContent='';
   document.getElementById('msg').className='msg';
@@ -212,9 +384,9 @@ function newGame(){
     document.getElementById('timer').textContent=m+':'+s;
   },1000);
 }
+
 function renderBoard(){
-  const bd=document.getElementById('board');
-  bd.innerHTML='';
+  const bd=document.getElementById('board');bd.innerHTML='';
   for(let i=0;i<81;i++){
     const cell=document.createElement('div');
     cell.className='cell'+(given[i]?' given':'');
@@ -233,7 +405,7 @@ function renderBoard(){
   highlightCells();
 }
 function highlightCells(){
-  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected','related','same-num','error','hint-cell'));
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected','related','same-num','error'));
   if(selected===null)return;
   const r=Math.floor(selected/9),co=selected%9,br=Math.floor(r/3)*3,bc=Math.floor(co/3)*3;
   const selVal=board[selected];
@@ -246,65 +418,62 @@ function highlightCells(){
   });
 }
 function selectCell(i){selected=i;highlightCells()}
+
 function inputNum(n){
   if(selected===null||given[selected]||won)return;
   if(memoMode){
-    if(!board[selected]){memo[selected].has(n)?memo[selected].delete(n):memo[selected].add(n)}
+    if(!board[selected]){
+      memo[selected].has(n)?memo[selected].delete(n):memo[selected].add(n);
+      playSfx('input');
+    }
   } else {
     const prev=board[selected];
     board[selected]=board[selected]===n?0:n;
     if(n&&n!==solution[selected]&&prev!==n){
+      playSfx('miss');
       missCount++;
       document.getElementById('missCount').textContent='ミス: '+missCount+'/3';
       if(missCount>=3){
         clearInterval(timerInterval);
-        setTimeout(()=>showMissAd1(),400);
         renderBoard();
+        setTimeout(()=>showMissAd1(),400);
         return;
       }
+    } else if(n&&n===solution[selected]){
+      playSfx('input');
     }
     if(n)memo[selected].clear();
     checkWin();
   }
   renderBoard();
 }
+
 function eraseCell(){
   if(selected===null||given[selected]||won)return;
-  board[selected]=0;memo[selected].clear();renderBoard();
+  board[selected]=0;memo[selected].clear();
+  playSfx('erase');
+  renderBoard();
 }
 function toggleMemo(){
   memoMode=!memoMode;
   document.getElementById('memoBtn').classList.toggle('active',memoMode);
 }
-function useHint(){
-  if(hints<=0||won){document.getElementById('msg').textContent='ヒントが残っていません';document.getElementById('msg').className='msg err';return}
-  let candidates=[];
-  for(let i=0;i<81;i++)if(!given[i]&&board[i]!==solution[i])candidates.push(i);
-  if(!candidates.length)return;
-  let target=candidates[Math.floor(Math.random()*candidates.length)];
-  board[target]=solution[target];memo[target].clear();given[target]=true;
-  hints--;selected=target;
-  document.getElementById('hintsLeft').textContent='ヒント残り: '+hints;
-  checkWin();renderBoard();
-  document.querySelectorAll('.cell')[target].classList.add('hint-cell');
-}
 function checkWin(){
   if(board.every((v,i)=>v===solution[i])){
     won=true;clearInterval(timerInterval);
-    setTimeout(()=>showWinOverlay(),400);
+    playSfx('win');
+    setTimeout(()=>showWinOverlay(),600);
   }
 }
 
-/* 3回ミス → 広告① → 選択画面 */
+/* モーダル */
 function showMissAd1(){
   document.getElementById('missAd1Overlay').classList.add('show');
-  startCountdown('missAd1Countdown', null, ()=>{
+  startCountdown('missAd1Countdown',null,()=>{
     document.getElementById('missAd1Overlay').classList.remove('show');
     document.getElementById('missChoiceOverlay').classList.add('show');
   });
 }
-
-/* 続ける → 広告② → ゲーム再開 */
 function showContinueAd(){
   document.getElementById('missChoiceOverlay').classList.remove('show');
   const overlay=document.getElementById('continueAdOverlay');
@@ -322,30 +491,28 @@ function continueGame(){
     document.getElementById('timer').textContent=m+':'+s;
   },1000);
 }
-
-/* 諦める → 即新ゲーム */
 function giveUp(){
   document.getElementById('missChoiceOverlay').classList.remove('show');
   newGame();
 }
-
-/* クリア → 広告 → 新ゲーム */
 function showWinOverlay(){
   let m=String(Math.floor(timer/60)).padStart(2,'0'),s=String(timer%60).padStart(2,'0');
   document.getElementById('winTime').textContent='クリアタイム: '+m+':'+s;
   document.getElementById('winOverlay').classList.add('show');
-  startCountdown('winCountdown','winCloseBtn', null);
+  startCountdown('winCountdown','winCloseBtn',null);
 }
 function closeWinOverlay(){
   document.getElementById('winOverlay').classList.remove('show');
   newGame();
 }
 
+/* 数字ボタン */
 const numpad=document.getElementById('numpad');
 for(let n=1;n<=9;n++){const b=document.createElement('button');b.className='num-btn';b.textContent=n;b.onclick=()=>inputNum(n);numpad.appendChild(b)}
 const er=document.createElement('button');er.className='num-btn erase';er.textContent='⌫';er.onclick=eraseCell;numpad.appendChild(er);
 
 document.addEventListener('keydown',e=>{
+  if(document.getElementById('gameScreen').style.display==='none')return;
   if(e.key>='1'&&e.key<='9')inputNum(+e.key);
   if(e.key==='Backspace'||e.key==='Delete')eraseCell();
   if(e.key==='ArrowRight'&&selected!==null&&selected%9<8)selectCell(selected+1);
@@ -357,7 +524,6 @@ document.addEventListener('keydown',e=>{
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));
 }
-newGame();
 </script>
 </body>
 </html>
